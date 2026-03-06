@@ -22,6 +22,7 @@ def main(filename, start, count, output):
 
     # Plot settings
     tasks = ['buoyancy', 'vorticity']
+    # tasks = ['ux', 'uz']
     scale = 1.5
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
@@ -45,8 +46,14 @@ def main(filename, start, count, output):
                 i, j = divmod(n, ncols)
                 axes = mfig.add_axes(i, j, [0, 0, 1, 1])
                 # Call 3D plotting helper, slicing in time
-                dset = file['tasks'][task]
-                plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                if task=='buoyancy':
+                    dset = file['tasks'][task]
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.5,0.5))
+                   # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                if task=='vorticity':
+                    dset = file['tasks'][task]
+                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.02,0.02))
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
             # Add time title
             title = title_func(file['scales/sim_time'][index])
             title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y
