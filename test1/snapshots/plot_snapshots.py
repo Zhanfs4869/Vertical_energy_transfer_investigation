@@ -30,7 +30,7 @@ def main(filename, start, count, output):
 
     # Layout
     nrows, ncols = 1, 2
-    image = plot_tools.Box(1, 1)
+    image = plot_tools.Box(np.sqrt(10), 1)
     pad = plot_tools.Frame(0.3, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)
 
@@ -48,12 +48,12 @@ def main(filename, start, count, output):
                 # Call 3D plotting helper, slicing in time
                 if task=='buoyancy':
                     dset = file['tasks'][task]
-                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.5,0.5))
-                   # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.5,0.5))
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
                 if task=='vorticity':
                     dset = file['tasks'][task]
-                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.02,0.02))
-                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-8,8))
+                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
             # Add time title
             title = title_func(file['scales/sim_time'][index])
             title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y

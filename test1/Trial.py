@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 
 ###### Parameters
 Lx, Lz = 1, 1         #The range of the box
-Nx, Nz = 256, 256     #Number of grid points
+Nx, Nz = 512, 128     #Number of grid points
 Ro = 0.1
 Rey = 3000
-Nfc = 10
-ap = 0.1
+Nfc = np.sqrt(10000)
+ap = np.sqrt(0.1)
+ap2=(1/ap)**2
+N2 = Nfc**2*ap**2*Ro
 seed = 42
 
 #Settings of solver
@@ -43,15 +45,16 @@ p = dist.Field(name='p', bases=(xbasis,zbasis))
 # Set of forcing
 kf = 2*np.pi*16/Lz
 kfw = 2*np.pi*1/Lz
-eta = 1
+eta = 3000
 
 Fwx = dist.Field(name='Fwx', bases=(xbasis, zbasis))
 Fwz = dist.Field(name='Fwz', bases=(xbasis, zbasis))
 kx = xbasis.wavenumbers[dist.local_modes(xbasis)]*ap
 kz = zbasis.wavenumbers[dist.local_modes(zbasis)]
-dkx = 2 * np.pi * ap / Lx
+dkx = 2 * np.pi / Lx
 dkz = 2 * np.pi / Lz
-k = (kx**2 + kz**2)**0.5
+# k = ((kx * ap)**2 + kz**2)**0.5
+k = ((kx)**2 + kz**2)**0.5
 
 # print(kx)
 # print(kz)
@@ -68,6 +71,7 @@ def draw_gaussian_random_field():
     # 2D coefficient poewr spectrum: divide by mode power
     Pc = P2 / 2**((kx == 0).astype(float) + (kz == 0).astype(float) - 2)
     # Forcing amplitude, including division between sine and cosine
+    # f_amp = (Pc / 2 * dkx * ap * dkz)**0.5
     f_amp = (Pc / 2 * dkx * dkz)**0.5
     # Forcing with random phase
     f = f_amp * rand.randn(*k.shape)
@@ -81,7 +85,6 @@ def set_vorticity_forcing(timestep):
     # Rescale by forcing rate, including factor for 1/2 in kinetic energy
     Fwx['c'] *= (2 * eta / timestep)**0.5
     Fwz['c'] *= (2 * eta / timestep)**0.5
-    Fwz['c'] = Fwz['c']/ap
 
 
 # the set of tau terms
@@ -90,7 +93,14 @@ t = dist.Field(name='t')
 
 ###### Substitutions
 x, z = dist.local_grids(xbasis, zbasis)
-ex, ez = coords.unit_vector_fields(dist)                       
+ex, ez = coords.unit_vector_fields(dist) 
+
+uxx=d3.Differentiate(d3.Differentiate(u@ex, coords['x']), coords['x'])          
+uzz=d3.Differentiate(d3.Differentiate(u@ex, coords['z']), coords['z'])     
+wxx=d3.Differentiate(d3.Differentiate(u@ez, coords['x']), coords['x'])          
+wzz=d3.Differentiate(d3.Differentiate(u@ez, coords['z']), coords['z'])   
+vxx=d3.Differentiate(d3.Differentiate(v, coords['x']), coords['x'])          
+vzz=d3.Differentiate(d3.Differentiate(v, coords['z']), coords['z'])            
 
 
 sig = dist.Field(name='sig', bases=zbasis)
@@ -102,11 +112,13 @@ sig['g'] = sig_profile(z)
 
 ###### Problem
 problem = d3.IVP([u, v, b, p, tau_p], time=t, namespace=locals())
-problem.add_equation("dt(u)-(1/Ro)*v*ex+(1/Ro)*grad(p)-(1/Rey)*div(grad(u))-b*ez=\
-    -u@grad(u)+Fwx*sig*ex+Fwz*sig*ez")
+# problem.add_equation("dt(u)-(1/Ro)*v*ex+(1/Ro)*grad(p)-(1/Rey)*div(grad(u))-b*ez=\
+#     -u@grad(u)+Fwx*sig*ex+Fwz*sig*ez")
+problem.add_equation("dt(u@ex)-(1/Ro)*v+(1/Ro)*ex@grad(p)-(1/Rey)*(uxx+ap2*uzz)=-u@grad(u@ex)+Fwx*sig")
+problem.add_equation("dt(u@ez)+(1/Ro)*ap2*(ez@grad(p)-b)-(1/Rey)*(wxx+ap2*wzz)=-u@grad(u@ez)+Fwz*sig")
 problem.add_equation("trace(grad(u)) + tau_p = 0 ")
-problem.add_equation("dt(v)+(1/Ro)*(u@ex)-(1/Rey)*div(grad(v))=-u@grad(v)")
-problem.add_equation("dt(b)+(Nfc)*(Nfc)*(u@ez)=-u@grad(b)")
+problem.add_equation("dt(v)+(1/Ro)*(u@ex)-(1/Rey)*(vxx+ap2*vzz)=-u@grad(v)")
+problem.add_equation("dt(b)+N2*(u@ez)=-u@grad(b)")
 problem.add_equation("integ(p) = 0")
 
 # # problem = d3.IVP([u, v, b, p, tau_p], time=t, namespace=locals())

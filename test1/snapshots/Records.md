@@ -35,5 +35,19 @@ forcing['g'] *= 1 / (rms + 1e-30)
 ## Movie9
 `Ro=0.01, Rey=10000, Nfc=10, eta=10000`
 
+## Movie10
+新的控制方程，forcing的频谱里没有使用ap
+```python
+Lx, Lz = 1, 1         #The range of the box
+Nx, Nz = 512, 128     #Number of grid points
+Ro = 0.1
+Rey = 3000
+Nfc = np.sqrt(10000)
+ap = np.sqrt(0.1)
+ap2=(1/ap)**2
+N2 = Nfc**2*ap**2*Ro
+eta = 300
+```
+
 
 
