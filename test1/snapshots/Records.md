@@ -49,5 +49,23 @@ N2 = Nfc**2*ap**2*Ro
 eta = 300
 ```
 
+## Movie10
+新的控制方程，forcing的频谱里没有使用ap
+```python
+Lx, Lz = 1, 1         #The range of the box
+Nx, Nz = 512, 128     #Number of grid points
+Ro = 0.1
+Rey = 3000
+Nfc = np.sqrt(10000)
+ap = np.sqrt(0.1)
+ap2=(1/ap)**2
+N2 = Nfc**2*ap**2*Ro
+seed = 42
+kf = 2*np.pi*16/Lz
+kfw = 2*np.pi*1/Lz
+eta = 3000
+```
+通过先定义流函数，再求旋度得到的forcing
+
 
 

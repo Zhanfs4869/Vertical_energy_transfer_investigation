@@ -16,8 +16,8 @@ Lx, Lz = 1, 1         #The range of the box
 Nx, Nz = 512, 128     #Number of grid points
 Ro = 0.1
 Rey = 3000
-Nfc = np.sqrt(10000)
-ap = np.sqrt(0.1)
+Nfc = np.sqrt(100000)
+ap = np.sqrt(0.01)
 ap2=(1/ap)**2
 N2 = Nfc**2*ap**2*Ro
 seed = 42
@@ -47,14 +47,25 @@ kf = 2*np.pi*16/Lz
 kfw = 2*np.pi*1/Lz
 eta = 3000
 
+psi = dist.Field(name='psi', bases=(xbasis, zbasis))
 Fwx = dist.Field(name='Fwx', bases=(xbasis, zbasis))
 Fwz = dist.Field(name='Fwz', bases=(xbasis, zbasis))
-kx = xbasis.wavenumbers[dist.local_modes(xbasis)]*ap
+kx = xbasis.wavenumbers[dist.local_modes(xbasis)]
 kz = zbasis.wavenumbers[dist.local_modes(zbasis)]
 dkx = 2 * np.pi / Lx
 dkz = 2 * np.pi / Lz
-# k = ((kx * ap)**2 + kz**2)**0.5
-k = ((kx)**2 + kz**2)**0.5
+k = ((kx * ap)**2 + kz**2)**0.5
+k02 = (kx**2 + kz**2)
+# k = ((kx)**2 + kz**2)**0.5
+
+x, z = dist.local_grids(xbasis, zbasis)
+ex, ez = coords.unit_vector_fields(dist) 
+
+sig = dist.Field(name='sig', bases=zbasis)
+def sig_profile(z):
+    S =  0.5*(1 + np.tanh((z-(15/16))*32))*(1-z)**(0.1)/0.76
+    return S
+sig['g'] = sig_profile(z)
 
 # print(kx)
 # print(kz)
@@ -74,27 +85,31 @@ def draw_gaussian_random_field():
     # f_amp = (Pc / 2 * dkx * ap * dkz)**0.5
     f_amp = (Pc / 2 * dkx * dkz)**0.5
     # Forcing with random phase
-    f = f_amp * rand.randn(*k.shape)
+    f = f_amp * rand.randn(*k.shape)/(k02+(k02==0))
     return f
 
 def set_vorticity_forcing(timestep):
     """Set vorticity forcing field from scaled Gaussian random field."""
     # Set forcing to normalized Gaussian random field
-    Fwx['c'] = draw_gaussian_random_field()*(kz)/(k**2+(k==0))
-    Fwz['c'] = draw_gaussian_random_field()*(-kx)/(k**2+(k==0))
-    # Rescale by forcing rate, including factor for 1/2 in kinetic energy
-    Fwx['c'] *= (2 * eta / timestep)**0.5
-    Fwz['c'] *= (2 * eta / timestep)**0.5
+    psi['c'] = draw_gaussian_random_field()
+    psi['g'] = psi['g']*(2 * eta / timestep)**0.5
+    Fwx['c'] = d3.Differentiate(psi, coords['z']).evaluate()['c']
+    Fwz['c'] = (-d3.Differentiate(psi, coords['x'])).evaluate()['c']
+    # print(Fwx['g'])
+    # Fwx['c'] = psi * kz / (k**2 + (k==0))
+    # Fwz['c'] = -psi * kx / (k**2 + (k==0))
+    # # Rescale by forcing rate, including factor for 1/2 in kinetic energy
+    # Fwx['c'] *= (2 * eta / timestep)**0.5
+    # Fwz['c'] *= (2 * eta / timestep)**0.5
 
+# set_vorticity_forcing(0.0005)
+# print(Fwx['g'])
 
 # the set of tau terms
 tau_p = dist.Field(name='tau_p')
 t = dist.Field(name='t')
 
 ###### Substitutions
-x, z = dist.local_grids(xbasis, zbasis)
-ex, ez = coords.unit_vector_fields(dist) 
-
 uxx=d3.Differentiate(d3.Differentiate(u@ex, coords['x']), coords['x'])          
 uzz=d3.Differentiate(d3.Differentiate(u@ex, coords['z']), coords['z'])     
 wxx=d3.Differentiate(d3.Differentiate(u@ez, coords['x']), coords['x'])          
@@ -102,12 +117,6 @@ wzz=d3.Differentiate(d3.Differentiate(u@ez, coords['z']), coords['z'])
 vxx=d3.Differentiate(d3.Differentiate(v, coords['x']), coords['x'])          
 vzz=d3.Differentiate(d3.Differentiate(v, coords['z']), coords['z'])            
 
-
-sig = dist.Field(name='sig', bases=zbasis)
-def sig_profile(z):
-    S =  0.5*(1 + np.tanh((z-(15/16))*64))
-    return S
-sig['g'] = sig_profile(z)
 
 
 ###### Problem
@@ -156,7 +165,7 @@ CFL.add_velocity(u)
 flow = d3.GlobalFlowProperty(solver, cadence=10)
 flow.add_property((np.sqrt(u@u))*Rey, name='Re')
 
-###### Main loop
+##### Main loop
 startup_iter = 10
 try:
     logger.info('Starting main loop')
