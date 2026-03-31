@@ -21,15 +21,15 @@ def main(filename, start, count, output):
     """Save plot of specified tasks for given range of analysis writes."""
 
     # Plot settings
-    tasks = ['buoyancy', 'vorticity']
-    # tasks = ['ux', 'uy', 'uz']
+    # tasks = ['buoyancy', 'vorticity']
+    tasks = ['ux', 'uy', 'uz']
     scale = 1.5
     dpi = 200
     title_func = lambda sim_time: 't = {:.3f}'.format(sim_time)
     savename_func = lambda write: 'write_{:06}.png'.format(write)
 
     # Layout
-    nrows, ncols = 2, 1
+    nrows, ncols = 3, 1
     image = plot_tools.Box(np.sqrt(100), 1)
     pad = plot_tools.Frame(0.3, 0, 0, 0)
     margin = plot_tools.Frame(0.2, 0.1, 0, 0)
@@ -46,18 +46,18 @@ def main(filename, start, count, output):
                 i, j = divmod(n, ncols)
                 axes = mfig.add_axes(i, j, [0, 0, 1, 1])
                 # Call 3D plotting helper, slicing in time
-                if task=='buoyancy':
+                if task=='ux':
                     dset = file['tasks'][task]
-                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.06,0.06))
-                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
-                if task=='vorticity':
-                    dset = file['tasks'][task]
-                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-10,10))
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.06,0.06))
                     # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
-                # if task=='uz':
-                #     dset = file['tasks'][task]
-                #     # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.1,0.1))
-                #     plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                if task=='uy':
+                    dset = file['tasks'][task]
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.006,0.006))
+                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
+                if task=='uz':
+                    dset = file['tasks'][task]
+                    plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False,clim=(-0.1,0.1))
+                    # plot_tools.plot_bot_3d(dset, 0, index, axes=axes, title=task, even_scale=True, visible_axes=False)
             # Add time title
             title = title_func(file['scales/sim_time'][index])
             title_height = 1 - 0.5 * mfig.margin.top / mfig.fig.y

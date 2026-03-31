@@ -13,17 +13,17 @@ logger = logging.getLogger(__name__)
 
 ###### Parameters
 Lx, Lz = 1, 1         #The range of the box
-Nx, Nz = 512, 128     #Number of grid points
+Nx, Nz = 2048, 128     #Number of grid points
 Ro = 0.1
-Rey = 3000
-Nfc = np.sqrt(100000)
+Rey = 8000
+Nfc = 100
 ap = np.sqrt(0.01)
 ap2=(1/ap)**2
 N2 = Nfc**2*ap**2*Ro
 seed = 42
 
 #Settings of solver
-scale = 0.0005              #the value of max_timestep
+scale = 0.001              #the value of max_timestep
 dealias = 3/2
 stop_sim_time = 1
 timestepper = d3.RK443
@@ -45,7 +45,8 @@ p = dist.Field(name='p', bases=(xbasis,zbasis))
 # Set of forcing
 kf = 2*np.pi*16/Lz
 kfw = 2*np.pi*1/Lz
-eta = 3000
+# eta = 3000
+eta = 30000
 
 psi = dist.Field(name='psi', bases=(xbasis, zbasis))
 Fwx = dist.Field(name='Fwx', bases=(xbasis, zbasis))
@@ -117,7 +118,7 @@ wzz=d3.Differentiate(d3.Differentiate(u@ez, coords['z']), coords['z'])
 vxx=d3.Differentiate(d3.Differentiate(v, coords['x']), coords['x'])          
 vzz=d3.Differentiate(d3.Differentiate(v, coords['z']), coords['z'])            
 
-
+# print(z)
 
 ###### Problem
 problem = d3.IVP([u, v, b, p, tau_p], time=t, namespace=locals())
